@@ -81,10 +81,15 @@ app.post('/api/zoho/token', async (req, res) => {
       return res.status(response.status).json(data)
     }
 
+    // Debug: Log the entire response from Zoho
+    console.log('🔍 Full Zoho response:', JSON.stringify(data, null, 2))
+    console.log('🔍 access_token type:', typeof data.access_token)
+    console.log('🔍 access_token value:', data.access_token)
+
     // CRITICAL: Validate tokens before sending to frontend
     if (!data.access_token || typeof data.access_token !== 'string' || data.access_token === 'undefined') {
-      console.error('❌ CRITICAL: Invalid access_token from Zoho!', data)
-      return res.status(500).json({ error: 'Invalid access token received from Zoho' })
+      console.error('❌ CRITICAL: Invalid access_token from Zoho!', JSON.stringify(data, null, 2))
+      return res.status(500).json({ error: 'Invalid access token received from Zoho', details: data })
     }
     
     if (!data.refresh_token || typeof data.refresh_token !== 'string' || data.refresh_token === 'undefined') {
