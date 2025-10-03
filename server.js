@@ -82,6 +82,13 @@ app.post('/api/zoho/token', async (req, res) => {
     }
 
     console.log('✅ Token exchange successful')
+    console.log('📦 Token data:', {
+      has_access_token: !!data.access_token,
+      has_refresh_token: !!data.refresh_token,
+      expires_in: data.expires_in,
+      access_token_preview: data.access_token ? data.access_token.substring(0, 20) + '...' : 'MISSING'
+    })
+    
     res.json(data)
   } catch (error) {
     console.error('❌ Error exchanging token:', error)

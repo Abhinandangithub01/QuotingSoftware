@@ -69,6 +69,13 @@ export class ZohoAuthService {
 
       const data = await response.json()
       
+      console.log('📦 Received token data:', {
+        has_access_token: !!data.access_token,
+        has_refresh_token: !!data.refresh_token,
+        expires_in: data.expires_in,
+        access_token_preview: data.access_token ? data.access_token.substring(0, 20) + '...' : 'MISSING'
+      })
+      
       // Store tokens
       this.accessToken = data.access_token
       this.refreshToken = data.refresh_token
@@ -76,9 +83,20 @@ export class ZohoAuthService {
       const expiryTime = Date.now() + (data.expires_in * 1000)
       this.tokenExpiry = expiryTime
 
+      console.log('💾 Saving to localStorage...', {
+        access_token: data.access_token ? 'Present' : 'UNDEFINED',
+        refresh_token: data.refresh_token ? 'Present' : 'UNDEFINED',
+        expiry: expiryTime
+      })
+
       localStorage.setItem('zoho_access_token', data.access_token)
       localStorage.setItem('zoho_refresh_token', data.refresh_token)
       localStorage.setItem('zoho_token_expiry', expiryTime.toString())
+      
+      console.log('✅ Tokens saved. Verification:', {
+        saved_access: localStorage.getItem('zoho_access_token') ? 'SUCCESS' : 'FAILED',
+        saved_refresh: localStorage.getItem('zoho_refresh_token') ? 'SUCCESS' : 'FAILED'
+      })
 
       return data
     } catch (error) {
