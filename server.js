@@ -190,6 +190,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Zoho OAuth Proxy Server Running' })
 })
 
+// Config endpoint for frontend to get environment variables
+app.get('/api/config', (req, res) => {
+  res.json({
+    VITE_ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.VITE_ZOHO_CLIENT_ID,
+    VITE_ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.VITE_ZOHO_CLIENT_SECRET,
+    VITE_ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.VITE_ZOHO_REDIRECT_URI,
+    VITE_ZOHO_ORGANIZATION_ID: process.env.VITE_ZOHO_ORGANIZATION_ID,
+    VITE_ZOHO_API_DOMAIN: process.env.ZOHO_API_DOMAIN || process.env.VITE_ZOHO_API_DOMAIN
+  })
+})
+
 // Serve frontend for all other routes (SPA fallback) in production
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {

@@ -69,11 +69,25 @@ export function Settings() {
     toast.success('Settings saved successfully')
   }
 
-  const handleConnectZoho = () => {
-    // Check if Zoho credentials are configured
-    if (!import.meta.env.VITE_ZOHO_CLIENT_ID) {
-      toast.error('Zoho Books integration not configured. Please add credentials to .env file.')
-      return
+  const handleConnectZoho = async () => {
+    // In production, check config from server
+    if (import.meta.env.PROD) {
+      try {
+        const response = await fetch('/api/config')
+        const config = await response.json()
+        if (!config.VITE_ZOHO_CLIENT_ID) {
+          toast.error('Zoho Books integration not configured. Please add environment variables in Railway.')
+          return
+        }
+      } catch (error) {
+        console.error('Failed to fetch config:', error)
+      }
+    } else {
+      // Check if Zoho credentials are configured in development
+      if (!import.meta.env.VITE_ZOHO_CLIENT_ID) {
+        toast.error('Zoho Books integration not configured. Please add credentials to .env file.')
+        return
+      }
     }
 
     // Open Zoho OAuth in new tab
