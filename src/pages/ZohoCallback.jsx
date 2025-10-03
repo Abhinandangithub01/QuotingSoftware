@@ -56,10 +56,10 @@ export function ZohoCallback() {
             window.close()
           }, 1500)
         } else {
-          // If not in popup, redirect to settings
+          // If not in popup, force reload to refresh app state with new tokens
           setTimeout(() => {
-            navigate('/settings')
-          }, 2000)
+            window.location.href = '/settings'
+          }, 1500)
         }
       } catch (error) {
         console.error('OAuth callback error:', error)
