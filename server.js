@@ -81,12 +81,24 @@ app.post('/api/zoho/token', async (req, res) => {
       return res.status(response.status).json(data)
     }
 
+    // CRITICAL: Validate tokens before sending to frontend
+    if (!data.access_token || typeof data.access_token !== 'string' || data.access_token === 'undefined') {
+      console.error('❌ CRITICAL: Invalid access_token from Zoho!', data)
+      return res.status(500).json({ error: 'Invalid access token received from Zoho' })
+    }
+    
+    if (!data.refresh_token || typeof data.refresh_token !== 'string' || data.refresh_token === 'undefined') {
+      console.error('❌ CRITICAL: Invalid refresh_token from Zoho!', data)
+      return res.status(500).json({ error: 'Invalid refresh token received from Zoho' })
+    }
+
     console.log('✅ Token exchange successful')
     console.log('📦 Token data:', {
       has_access_token: !!data.access_token,
       has_refresh_token: !!data.refresh_token,
       expires_in: data.expires_in,
-      access_token_preview: data.access_token ? data.access_token.substring(0, 20) + '...' : 'MISSING'
+      access_token_preview: data.access_token.substring(0, 20) + '...',
+      token_length: data.access_token.length
     })
     
     res.json(data)
@@ -129,7 +141,19 @@ app.post('/api/zoho/refresh', async (req, res) => {
       return res.status(response.status).json(data)
     }
 
+    // CRITICAL: Validate new access token before sending to frontend
+    if (!data.access_token || typeof data.access_token !== 'string' || data.access_token === 'undefined') {
+      console.error('❌ CRITICAL: Invalid access_token from Zoho refresh!', data)
+      return res.status(500).json({ error: 'Invalid access token received from Zoho' })
+    }
+
     console.log('✅ Token refresh successful')
+    console.log('📦 Refreshed token:', {
+      has_access_token: !!data.access_token,
+      expires_in: data.expires_in,
+      access_token_preview: data.access_token.substring(0, 20) + '...'
+    })
+    
     res.json(data)
   } catch (error) {
     console.error('❌ Error refreshing token:', error)

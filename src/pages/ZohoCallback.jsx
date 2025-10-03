@@ -44,7 +44,11 @@ export function ZohoCallback() {
         // Verify tokens were saved
         const savedToken = localStorage.getItem('zoho_access_token')
         if (!savedToken) {
+          console.error('❌ CRITICAL: Token was not saved to localStorage after exchange!')
+          throw new Error('Failed to save authentication tokens. Please try again.')
         }
+        
+        console.log('✅ Token verified in localStorage:', savedToken.substring(0, 20) + '...')
 
         setStatus('success')
         setMessage('Successfully connected to Zoho Books!')

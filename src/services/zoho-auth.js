@@ -14,6 +14,25 @@ export class ZohoAuthService {
   }
 
   /**
+   * Validate token value to prevent undefined/null/invalid values
+   */
+  validateToken(token, tokenType = 'token') {
+    if (!token) {
+      throw new Error(`${tokenType} is missing`)
+    }
+    if (typeof token !== 'string') {
+      throw new Error(`${tokenType} must be a string, got ${typeof token}`)
+    }
+    if (token === 'undefined' || token === 'null') {
+      throw new Error(`${tokenType} has invalid string value: ${token}`)
+    }
+    if (token.length < 10) {
+      throw new Error(`${tokenType} is too short: ${token.length} characters`)
+    }
+    return true
+  }
+
+  /**
    * Reload tokens from localStorage
    */
   reloadTokens() {
@@ -91,9 +110,18 @@ export class ZohoAuthService {
         has_access_token: !!data.access_token,
         has_refresh_token: !!data.refresh_token,
         expires_in: data.expires_in,
-        api_domain: data.api_domain,
-        access_token_preview: data.access_token ? data.access_token.substring(0, 20) + '...' : 'MISSING'
+        access_token_preview: data.access_token ? data.access_token.substring(0, 20) + '...' : 'MISSING',
+        full_response: data
       })
+      
+      // CRITICAL: Validate tokens exist and are not undefined
+      try {
+        this.validateToken(data.access_token, 'Access token')
+        this.validateToken(data.refresh_token, 'Refresh token')
+      } catch (validationError) {
+        console.error('❌ CRITICAL: Token validation failed!', validationError.message, data)
+        throw new Error(`Token validation failed: ${validationError.message}`)
+      }
       
       // Store tokens
       this.accessToken = data.access_token
@@ -102,18 +130,22 @@ export class ZohoAuthService {
       const expiryTime = Date.now() + (data.expires_in * 1000)
       this.tokenExpiry = expiryTime
 
+      // Determine API domain from config (Zoho doesn't return api_domain in token response)
+      const config = await this.loadConfig()
+      const apiDomain = config.VITE_ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
+      
       console.log('💾 Saving to localStorage...', {
         access_token: data.access_token ? 'Present' : 'UNDEFINED',
         refresh_token: data.refresh_token ? 'Present' : 'UNDEFINED',
-        api_domain: data.api_domain,
+        api_domain: apiDomain,
         expiry: expiryTime
       })
 
-      // Save tokens and API domain (CRITICAL: Use api_domain from Zoho response)
+      // Save tokens and API domain
       localStorage.setItem('zoho_access_token', data.access_token)
       localStorage.setItem('zoho_refresh_token', data.refresh_token)
       localStorage.setItem('zoho_token_expiry', expiryTime.toString())
-      localStorage.setItem('zoho_api_domain', data.api_domain || 'https://www.zohoapis.in')
+      localStorage.setItem('zoho_api_domain', apiDomain)
       
       console.log('✅ Tokens saved. Verification:', {
         saved_access: localStorage.getItem('zoho_access_token') ? 'SUCCESS' : 'FAILED',
@@ -153,6 +185,9 @@ export class ZohoAuthService {
     try {
       console.log('🔄 Starting token refresh...')
       
+      // Reload tokens from localStorage in case they were updated elsewhere
+      this.reloadTokens()
+      
       if (!this.refreshToken) {
         throw new Error('No refresh token available')
       }
@@ -180,6 +215,14 @@ export class ZohoAuthService {
       
       console.log('✅ Token refreshed successfully')
       
+      // Validate new access token
+      try {
+        this.validateToken(data.access_token, 'Refreshed access token')
+      } catch (validationError) {
+        console.error('❌ CRITICAL: Token validation failed!', validationError.message, data)
+        throw new Error(`Token validation failed: ${validationError.message}`)
+      }
+      
       // Update access token
       this.accessToken = data.access_token
       const expiryTime = Date.now() + (data.expires_in * 1000)
@@ -187,6 +230,11 @@ export class ZohoAuthService {
 
       localStorage.setItem('zoho_access_token', data.access_token)
       localStorage.setItem('zoho_token_expiry', expiryTime.toString())
+      
+      console.log('✅ Token refresh saved:', {
+        access_token_preview: data.access_token.substring(0, 20) + '...',
+        expiry: new Date(expiryTime).toISOString()
+      })
 
       return data
     } catch (error) {
@@ -217,10 +265,21 @@ export class ZohoAuthService {
       throw new Error('No access token available. Please authenticate.')
     }
 
-    // Validate token format
+    // Validate token format and value
+    try {
+      this.validateToken(this.accessToken, 'Access token')
+    } catch (validationError) {
+      console.error('❌ Token validation failed:', validationError.message)
+      console.error('❌ Invalid token in localStorage:', this.accessToken?.substring(0, 20))
+      this.clearTokens()
+      throw new Error(`Invalid access token: ${validationError.message}. Please re-authenticate.`)
+    }
+
+    // Additional Zoho-specific validation (tokens should start with "1000.")
     if (!this.accessToken.startsWith('1000.')) {
-      console.error('❌ Invalid token format:', this.accessToken.substring(0, 20))
-      throw new Error('Invalid access token format')
+      console.error('❌ Invalid Zoho token format:', this.accessToken.substring(0, 20))
+      this.clearTokens()
+      throw new Error('Invalid Zoho access token format. Please re-authenticate.')
     }
 
     // Check if token is expired or will expire in next 5 minutes

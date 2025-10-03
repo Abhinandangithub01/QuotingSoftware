@@ -182,19 +182,19 @@ export function ItemsTable({ items, onChange, onOpenCatalog }) {
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="w-full overflow-x-auto">
         <Table ref={tableRef}>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[300px]">Product</TableHead>
-              <TableHead className="w-[150px]">Finish/Color</TableHead>
-              <TableHead className="w-[180px]">Dimensions</TableHead>
-              <TableHead className="w-[100px]">UoM</TableHead>
-              <TableHead className="w-[100px]">Qty</TableHead>
-              <TableHead className="w-[120px]">Unit Price</TableHead>
-              <TableHead className="w-[100px]">Discount %</TableHead>
-              <TableHead className="w-[120px]">Line Total</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-[25%] min-w-[180px]">Product</TableHead>
+              <TableHead className="w-[12%] min-w-[100px]">Finish</TableHead>
+              <TableHead className="w-[14%] min-w-[120px]">Dimensions</TableHead>
+              <TableHead className="w-[8%] min-w-[70px]">UoM</TableHead>
+              <TableHead className="w-[8%] min-w-[60px]">Qty</TableHead>
+              <TableHead className="w-[10%] min-w-[90px]">Price</TableHead>
+              <TableHead className="w-[8%] min-w-[70px]">Disc%</TableHead>
+              <TableHead className="w-[10%] min-w-[90px]">Total</TableHead>
+              <TableHead className="w-[5%] min-w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -244,9 +244,9 @@ export function ItemsTable({ items, onChange, onOpenCatalog }) {
                         ...item.dimensions,
                         length: e.target.value
                       })}
-                      className="w-16"
+                      className="w-14 text-xs"
                     />
-                    <span className="flex items-center">×</span>
+                    <span className="flex items-center text-xs">×</span>
                     <Input
                       type="number"
                       placeholder="W"
@@ -255,7 +255,7 @@ export function ItemsTable({ items, onChange, onOpenCatalog }) {
                         ...item.dimensions,
                         width: e.target.value
                       })}
-                      className="w-16"
+                      className="w-14 text-xs"
                     />
                   </div>
                 </TableCell>
@@ -281,6 +281,7 @@ export function ItemsTable({ items, onChange, onOpenCatalog }) {
                     value={item.qty}
                     onChange={(e) => updateRow(index, 'qty', parseFloat(e.target.value) || 0)}
                     onKeyDown={(e) => handleKeyPress(e, index, 4)}
+                    className="w-full text-sm"
                   />
                 </TableCell>
                 <TableCell>
@@ -288,6 +289,7 @@ export function ItemsTable({ items, onChange, onOpenCatalog }) {
                     type="number"
                     value={item.unitPrice}
                     onChange={(e) => updateRow(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                    className="w-full text-sm"
                   />
                 </TableCell>
                 <TableCell>
@@ -295,28 +297,31 @@ export function ItemsTable({ items, onChange, onOpenCatalog }) {
                     type="number"
                     value={item.discount}
                     onChange={(e) => updateRow(index, 'discount', parseFloat(e.target.value) || 0)}
+                    className="w-full text-sm"
                   />
                 </TableCell>
                 <TableCell className="font-semibold">
                   {formatCurrency(item.lineTotal)}
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => duplicateRow(index)}
                       title="Duplicate (Ctrl+D)"
+                      className="h-8 w-8"
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteRow(index)}
                       title="Delete (Backspace)"
+                      className="h-8 w-8"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </TableCell>
