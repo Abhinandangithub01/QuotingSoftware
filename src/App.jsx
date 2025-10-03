@@ -53,7 +53,10 @@ function AppContent() {
     }
   }, [user, toggleTheme])
 
-  if (!user) {
+  // Allow callback route even without user login
+  const isCallbackRoute = window.location.pathname === '/auth/callback'
+  
+  if (!user && !isCallbackRoute) {
     return (
       <ThemeProvider>
         <Router>
@@ -61,6 +64,19 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<ZohoCallback />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+        <Toaster position="top-right" richColors />
+      </ThemeProvider>
+    )
+  }
+  
+  if (isCallbackRoute) {
+    return (
+      <ThemeProvider>
+        <Router>
+          <Routes>
+            <Route path="/auth/callback" element={<ZohoCallback />} />
           </Routes>
         </Router>
         <Toaster position="top-right" richColors />

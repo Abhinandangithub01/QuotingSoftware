@@ -22,7 +22,7 @@ export function Topbar({ onShowShortcuts }) {
     <div className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center px-6">
         <div className="flex items-center">
-          <img src="/logo.svg" alt="Logo" className="h-8" />
+          <img src="/venezia-logo.png" alt="Venezia Kitchen Cabinets & Bath" className="h-12 w-auto" />
         </div>
 
         <div className="ml-auto flex items-center gap-2">

@@ -13,8 +13,12 @@ export function ZohoCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('ZohoCallback: Starting OAuth callback process')
         const code = searchParams.get('code')
         const error = searchParams.get('error')
+        
+        console.log('ZohoCallback: Code:', code ? 'Present' : 'Missing')
+        console.log('ZohoCallback: Error:', error)
 
         if (error) {
           setStatus('error')
@@ -30,7 +34,9 @@ export function ZohoCallback() {
 
         // Exchange code for access token
         setMessage('Exchanging authorization code...')
+        console.log('ZohoCallback: Calling getAccessToken...')
         const tokenData = await zohoAuth.getAccessToken(code)
+        console.log('ZohoCallback: Token received:', tokenData ? 'Success' : 'Failed')
         
         // Wait a bit for tokens to be saved
         await new Promise(resolve => setTimeout(resolve, 500))
