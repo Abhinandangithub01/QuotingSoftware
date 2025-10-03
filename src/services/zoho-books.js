@@ -11,7 +11,10 @@ const ORGANIZATION_ID = import.meta.env.VITE_ZOHO_ORGANIZATION_ID
 
 class ZohoBooksAPI {
   constructor() {
-    this.proxyURL = 'http://localhost:3001/api/zoho/books'
+    // Use Railway backend in production, localhost in development
+    this.proxyURL = import.meta.env.PROD
+      ? 'https://quotingsoftware-production.up.railway.app/api/zoho/books'
+      : 'http://localhost:3001/api/zoho/books'
     this.organizationId = ORGANIZATION_ID
   }
 

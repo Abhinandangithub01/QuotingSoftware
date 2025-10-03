@@ -13,9 +13,12 @@ dotenv.config()
 const app = express()
 const PORT = 3001
 
-// Enable CORS for frontend
+// Enable CORS for frontend (both local and production)
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://quotingsoftware-production.up.railway.app'
+  ],
   credentials: true
 }))
 
