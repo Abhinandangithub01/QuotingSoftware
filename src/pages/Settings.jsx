@@ -91,7 +91,7 @@ export function Settings() {
     }
 
     // Open Zoho OAuth in new tab
-    const authUrl = zohoAuth.getAuthorizationUrl()
+    const authUrl = await zohoAuth.getAuthorizationUrl()
     window.open(authUrl, '_blank', 'width=600,height=700')
     
     toast.info('Authorization window opened. Please complete the authorization and return here.')
