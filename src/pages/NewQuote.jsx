@@ -5,11 +5,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ItemsTable } from '@/components/ItemsTable'
 import { CatalogDrawer } from '@/components/CatalogDrawer'
-import { Save, FileText, DollarSign, Info, Package } from 'lucide-react'
+import { Save, FileText, Package } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { calculateUSTax, formatTaxBreakdown } from '@/lib/usTaxSystem'
 import { useStore } from '@/store/useStore'
@@ -138,15 +137,42 @@ export function NewQuote() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">New Quote</h1>
-        <p className="text-muted-foreground">Create a new quote for your customer</p>
+    <div className="space-y-6 pb-32">
+      {/* Fixed Top Summary Bar */}
+      <div className="sticky top-0 z-10 bg-background border-b shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">New Quote</h1>
+            <p className="text-sm text-muted-foreground">Create a new quote for your customer</p>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Subtotal</p>
+              <p className="text-lg font-semibold">{formatCurrency(subtotal)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Tax ({taxResult.totalTaxRate.toFixed(2)}%)</p>
+              <p className="text-lg font-semibold">{formatCurrency(tax)}</p>
+            </div>
+            <div className="text-right border-l pl-6">
+              <p className="text-sm text-muted-foreground">Grand Total</p>
+              <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => handleSave(false)} size="lg">
+                <Save className="mr-2 h-4 w-4" />
+                Save Quote
+              </Button>
+              <Button onClick={() => handleSave(true)} variant="outline" size="lg">
+                Save as Draft
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Form */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Full Width Content */}
+      <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Customer & Project Details</CardTitle>
@@ -264,147 +290,41 @@ export function NewQuote() {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Right Column - Summary */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-20 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">{formatCurrency(subtotal)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground">
-                        {taxResult.exempt ? 'Tax (Exempt)' : `Tax (${taxResult.totalTaxRate.toFixed(2)}%)`}
-                      </span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4">
-                            <Info className="h-3 w-3" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                          <div className="space-y-2">
-                            <h4 className="font-medium">US Sales Tax Breakdown</h4>
-                            {taxResult.exempt ? (
-                              <div className="text-sm">
-                                <p className="text-green-600 font-medium">Tax Exempt</p>
-                                <p className="text-muted-foreground">{taxResult.exemptReason}</p>
-                              </div>
-                            ) : (
-                              <div className="text-sm space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">State ({customerState}):</span>
-                                  <span>{taxResult.stateTaxRate}% = {formatCurrency(taxResult.stateTax)}</span>
-                                </div>
-                                {taxResult.localTaxRate > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Local Tax:</span>
-                                    <span>{taxResult.localTaxRate}% = {formatCurrency(taxResult.localTax)}</span>
-                                  </div>
-                                )}
-                                <Separator />
-                                <div className="flex justify-between font-medium">
-                                  <span>Total Tax:</span>
-                                  <span>{formatCurrency(tax)}</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  {formatTaxBreakdown(taxResult)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <span className="font-medium">{formatCurrency(tax)}</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="shipping" className="text-sm text-muted-foreground">Shipping</Label>
-                    <div className="flex gap-2">
-                      <Select value={shippingMethod} onValueChange={setShippingMethod}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="express">Express</SelectItem>
-                          <SelectItem value="pickup">Pickup</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        type="number"
-                        value={shippingCost}
-                        onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
-                        className="w-24"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Grand Total</span>
-                    <span>{formatCurrency(grandTotal)}</span>
-                  </div>
+          {/* Shipping Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Shipping & Additional Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="shipping">Shipping Method</Label>
+                  <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="express">Express</SelectItem>
+                      <SelectItem value="pickup">Pickup</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-
-                <div className="space-y-2 pt-4">
-                  <Button 
-                    onClick={() => handleSave(false)} 
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Quote
-                  </Button>
-                  <Button 
-                    onClick={() => handleSave(true)} 
-                    variant="outline" 
-                    className="w-full"
-                  >
-                    Save as Draft
-                  </Button>
-                  <Button 
-                    onClick={handleConvertToInvoice} 
-                    variant="secondary" 
-                    className="w-full"
-                  >
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Convert to Invoice
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="shippingCost">Shipping Cost</Label>
+                  <Input
+                    id="shippingCost"
+                    type="number"
+                    value={shippingCost}
+                    onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                  />
                 </div>
-
-                <div className="text-xs text-muted-foreground space-y-1 pt-2">
-                  <p>💡 <kbd className="px-1 py-0.5 border rounded bg-muted">Ctrl+S</kbd> to save</p>
-                  <p>💡 <kbd className="px-1 py-0.5 border rounded bg-muted">Ctrl+Enter</kbd> to convert</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-
-      {/* Mobile Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-4 lg:hidden">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted-foreground">Grand Total</span>
-          <span className="text-xl font-bold">{formatCurrency(grandTotal)}</span>
-        </div>
-        <Button onClick={() => handleSave(false)} className="w-full" size="lg">
-          <Save className="mr-2 h-4 w-4" />
-          Save Quote
-        </Button>
       </div>
 
       <CatalogDrawer
