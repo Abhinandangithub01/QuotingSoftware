@@ -21,14 +21,8 @@ export function Topbar({ onShowShortcuts }) {
   return (
     <div className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-xl font-bold">V</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">Venezia Kitchen & Bath</h1>
-            <p className="text-xs text-muted-foreground">Quoting System</p>
-          </div>
+        <div className="flex items-center">
+          <img src="/logo.svg" alt="Logo" className="h-8" />
         </div>
 
         <div className="ml-auto flex items-center gap-2">
