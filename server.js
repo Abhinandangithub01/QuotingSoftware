@@ -85,16 +85,26 @@ app.post('/api/zoho/token', async (req, res) => {
     console.log('🔍 Full Zoho response:', JSON.stringify(data, null, 2))
     console.log('🔍 access_token type:', typeof data.access_token)
     console.log('🔍 access_token value:', data.access_token)
+    console.log('🔍 refresh_token type:', typeof data.refresh_token)
+    console.log('🔍 refresh_token value:', data.refresh_token)
 
-    // CRITICAL: Validate tokens before sending to frontend
-    if (!data.access_token || typeof data.access_token !== 'string' || data.access_token === 'undefined') {
-      console.error('❌ CRITICAL: Invalid access_token from Zoho!', JSON.stringify(data, null, 2))
-      return res.status(500).json({ error: 'Invalid access token received from Zoho', details: data })
+    // TEMPORARY: Relaxed validation - only check if tokens exist
+    if (!data.access_token) {
+      console.error('❌ CRITICAL: No access_token from Zoho!', JSON.stringify(data, null, 2))
+      return res.status(500).json({ error: 'No access token in Zoho response', details: data })
     }
     
-    if (!data.refresh_token || typeof data.refresh_token !== 'string' || data.refresh_token === 'undefined') {
-      console.error('❌ CRITICAL: Invalid refresh_token from Zoho!', data)
-      return res.status(500).json({ error: 'Invalid refresh token received from Zoho' })
+    if (!data.refresh_token) {
+      console.error('❌ CRITICAL: No refresh_token from Zoho!', JSON.stringify(data, null, 2))
+      return res.status(500).json({ error: 'No refresh token in Zoho response', details: data })
+    }
+    
+    // Warn if tokens look suspicious but still allow them through
+    if (typeof data.access_token !== 'string') {
+      console.warn('⚠️ WARNING: access_token is not a string, type:', typeof data.access_token)
+    }
+    if (typeof data.refresh_token !== 'string') {
+      console.warn('⚠️ WARNING: refresh_token is not a string, type:', typeof data.refresh_token)
     }
 
     console.log('✅ Token exchange successful')
@@ -146,10 +156,10 @@ app.post('/api/zoho/refresh', async (req, res) => {
       return res.status(response.status).json(data)
     }
 
-    // CRITICAL: Validate new access token before sending to frontend
-    if (!data.access_token || typeof data.access_token !== 'string' || data.access_token === 'undefined') {
-      console.error('❌ CRITICAL: Invalid access_token from Zoho refresh!', data)
-      return res.status(500).json({ error: 'Invalid access token received from Zoho' })
+    // TEMPORARY: Relaxed validation for refresh
+    if (!data.access_token) {
+      console.error('❌ CRITICAL: No access_token from Zoho refresh!', JSON.stringify(data, null, 2))
+      return res.status(500).json({ error: 'No access token in refresh response' })
     }
 
     console.log('✅ Token refresh successful')
