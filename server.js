@@ -11,7 +11,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const app = express()
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 
 // Enable CORS for frontend (both local and production)
 app.use(cors({
