@@ -324,7 +324,6 @@ export function NewQuote() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
 
       <CatalogDrawer
