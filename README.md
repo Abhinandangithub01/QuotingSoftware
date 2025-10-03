@@ -1,16 +1,16 @@
-# 🏛️# 🏗️ Venezia Kitchen & Bath - ERP Quoting System
+# 🏛️ Venezia Kitchen & Bath - Quoting System
 
-**Complete ERP quoting system with Zoho Books India integration**
+**Modern quoting system with Zoho Books integration, US tax calculation, and Excel-like features**
 
 <div align="center">
 
-### Modern, Keyboard-First Quoting Web Application
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.1.0-646CFF.svg)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.1-38B2AC.svg)](https://tailwindcss.com/)
+[![Zustand](https://img.shields.io/badge/Zustand-4.5.0-orange.svg)](https://github.com/pmndrs/zustand)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
 
-**[Quick Start](#-quick-start)** • **[Features](#-features)** • **[Documentation](#-documentation)** • **[Screenshots](#-screenshots)**
+**[Quick Start](#-quick-start)** • **[Features](#-features)** • **[Documentation](#-documentation)** • **[Deployment](#-deployment)**
 
 </div>
 
@@ -18,30 +18,59 @@
 
 ## 🚀 Quick Start
 
+### Development
+
 ```bash
 # Install dependencies
 npm install
 
-# Start development server
+# Run frontend + backend servers
+npm run dev:full
+
+# Frontend only (port 5173)
 npm run dev
 
-# Open http://localhost:5173
+# Backend only (port 3001)
+npm run server
 ```
 
-**Login with any email/password** (demo mode)
+### Production
 
-**Or on Windows:** Double-click `install.bat`
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+**Live Demo**: [https://quotingsoftware-production.up.railway.app](https://quotingsoftware-production.up.railway.app)
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
-- ✅ **Quote Management** - Create, edit, track, and convert quotes
-- ✅ **Keyboard-First Workflow** - 13+ shortcuts for power users
-- ✅ **Product Catalog** - Visual browser with smart search
-- ✅ **Items Table** - Keyboard-optimized with bulk operations
-- ✅ **Packing Slips** - Auto-generated, print-ready documents
-- ✅ **Dispatch Queue** - Batch operations and tracking
-- ✅ **Settings** - Customizable fields and preferences
+- ✅ **Quote Management** - Create, edit, track, and convert quotes to invoices
+- ✅ **Zoho Books Integration** - Real-time sync with customers, products, and estimates
+- ✅ **US Tax System** - Accurate state and local tax calculation for all 50 states
+- ✅ **Excel-like Table** - Bulk paste, keyboard navigation, auto-calculation
+- ✅ **Product Catalog** - Visual browser with smart search and typeahead
+- ✅ **Fixed Summary Bar** - Always-visible totals while scrolling
+- ✅ **Compact Layout** - Optimized for minimal scrolling
+
+### 🔗 Zoho Books Integration
+- 🔄 **OAuth 2.0** - Secure authentication with auto token refresh
+- 👥 **Customers Sync** - Import and sync contacts from Zoho
+- 📦 **Products Sync** - Import items with pricing and UoM
+- 📊 **Estimates** - Create and manage quotes in Zoho Books
+- 💰 **Invoices** - Convert quotes to invoices seamlessly
+- 🔒 **Multi-layer Validation** - Prevents invalid token issues
+
+### 💰 US Tax System
+- 📍 **State Tax** - Accurate rates for all 50 US states
+- 🏙️ **Local Tax** - County and city tax support
+- 🎫 **Tax Exemption** - Certificate-based exemption handling
+- 📊 **Tax Breakdown** - Detailed state + local tax display
+- 🔄 **Real-time Calculation** - Updates as you add items
 
 ### 🎨 User Experience
 - 🌙 **Dark/Light Mode** - Seamless theme switching
@@ -49,7 +78,7 @@ npm run dev
 - ⚡ **Fast Performance** - Vite-powered, optimized bundle
 - 🎭 **Smooth Animations** - Polished micro-interactions
 - 🔔 **Toast Notifications** - Real-time feedback
-- 💀 **Skeleton Loaders** - Better perceived performance
+- ⌨️ **Keyboard Shortcuts** - Power user workflow
 
 ### ⌨️ Keyboard Shortcuts
 
@@ -89,61 +118,55 @@ npm run dev
 
 ```
 Venezia/
-├── 📚 Documentation
-│   ├── START_HERE.md          ⭐ Begin here
-│   ├── QUICKSTART.md          2-minute tutorial
-│   ├── SETUP.md               Detailed setup
-│   ├── FEATURES.md            Complete features
-│   ├── SCREENSHOTS.md         Visual guide
-│   └── PROJECT_SUMMARY.md     Technical overview
+├── 📚 docs/
+│   ├── DEVELOPER_GUIDE.md     Complete developer documentation
+│   ├── ZOHO_SETUP.md          Zoho integration setup
+│   ├── DEPLOYMENT.md          Deployment guide
+│   ├── LAYOUT_FIXES.md        UI layout improvements
+│   ├── ZOHO_INTEGRATION_FIXES.md  Token validation fixes
+│   ├── SHORTCUTS_GUIDE.md     Keyboard shortcuts
+│   └── US_TAX_SYSTEM.md       Tax calculation guide
 │
-├── 💻 Source Code
-│   └── src/
-│       ├── pages/             7 main screens
-│       ├── components/        30+ components
-│       │   ├── ui/           20+ ShadCN components
-│       │   ├── ItemsTable.jsx
-│       │   ├── ProductTypeahead.jsx
-│       │   └── CatalogDrawer.jsx
-│       ├── lib/              Utils & mock data
-│       ├── hooks/            Custom hooks
-│       └── store/            State management
+├── 💻 src/
+│   ├── pages/                 Main application pages
+│   │   ├── Dashboard.jsx
+│   │   ├── NewQuote.jsx       Quote creation with fixed summary
+│   │   ├── QuotesList.jsx
+│   │   ├── QuoteDetail.jsx
+│   │   ├── Settings.jsx       Zoho integration settings
+│   │   └── ZohoCallback.jsx   OAuth callback handler
+│   │
+│   ├── components/            Reusable components
+│   │   ├── ui/               shadcn/ui components
+│   │   ├── ItemsTable.jsx    Excel-like line items table
+│   │   ├── ProductTypeahead.jsx  Smart product search
+│   │   └── CatalogDrawer.jsx Product catalog browser
+│   │
+│   ├── services/             External integrations
+│   │   ├── zoho-auth.js      OAuth 2.0 handler
+│   │   └── zoho-books.js     Zoho Books API client
+│   │
+│   ├── store/                State management
+│   │   └── useStore.js       Zustand store
+│   │
+│   └── lib/                  Utilities
+│       ├── utils.js
+│       ├── config.js
+│       └── usTaxSystem.js    US tax calculation
 │
-└── ⚙️ Configuration
-    ├── package.json
-    ├── vite.config.js
-    └── tailwind.config.js
+├── server.js                 Express proxy server
+└── ⚙️ Configuration files
 ```
-
-## 📸 Screenshots
-
-### Dashboard
-Modern, clean interface with intuitive navigation
-
-### Quote Creation
-Two-column layout with real-time summary
-
-### Items Table
-Keyboard-optimized with smart calculations
-
-### Product Catalog
-Visual browser with category tabs
-
-### Packing Slip
-Print-ready, professional format
-
-*See [SCREENSHOTS.md](SCREENSHOTS.md) for detailed visual guide*
 
 ## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|
-| **[START_HERE.md](START_HERE.md)** | 👉 **Start here!** Quick overview |
-| **[QUICKSTART.md](QUICKSTART.md)** | 2-minute tutorial |
-| **[SETUP.md](SETUP.md)** | Detailed installation guide |
-| **[FEATURES.md](FEATURES.md)** | Complete feature documentation |
-| **[SCREENSHOTS.md](SCREENSHOTS.md)** | Visual UI guide |
-| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** | Technical overview |
+| **[DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** | 👨‍💻 Complete developer documentation |
+| **[ZOHO_SETUP.md](docs/ZOHO_SETUP.md)** | 🔗 Zoho Books integration setup |
+| **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** | 🚀 Deployment instructions |
+| **[SHORTCUTS_GUIDE.md](docs/SHORTCUTS_GUIDE.md)** | ⌨️ Keyboard shortcuts reference |
+| **[US_TAX_SYSTEM.md](docs/US_TAX_SYSTEM.md)** | 💰 Tax calculation guide |
 
 ## 🎯 Key Workflows
 
@@ -162,80 +185,195 @@ Print-ready, professional format
 2. Mark as paid (Alt+P)
 3. View in Dispatch Queue → Print
 
-## 🚀 Build & Deploy
+## 🚀 Deployment
+
+### Railway (Recommended)
+
+1. **Connect GitHub Repository**
+   ```bash
+   git push origin main
+   ```
+
+2. **Configure Environment Variables**
+   ```env
+   NODE_ENV=production
+   ZOHO_CLIENT_ID=your_client_id
+   ZOHO_CLIENT_SECRET=your_client_secret
+   ZOHO_REDIRECT_URI=https://your-domain.com/zoho/callback
+   ZOHO_API_DOMAIN=https://www.zohoapis.in
+   VITE_ZOHO_ORGANIZATION_ID=your_org_id
+   ```
+
+3. **Deploy**
+   - Railway auto-deploys on push to `main`
+   - Build command: `npm run build`
+   - Start command: `npm start`
+
+### Manual Deployment
 
 ```bash
-# Development
-npm run dev
-
-# Production build
+# Build for production
 npm run build
 
-# Preview production build
-npm run preview
+# Output: dist/ folder
+# Deploy dist/ to any static hosting
 ```
 
-Output: `dist/` folder (ready to deploy)
+**See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions**
 
-## 🎨 Customization
+## 🔧 Configuration
 
-### Colors
-Edit `src/index.css`:
-```css
-:root {
-  --primary: 221.2 83.2% 53.3%;
-}
+### Environment Variables
+
+Create `.env` file:
+```env
+# Zoho OAuth Credentials
+ZOHO_CLIENT_ID=your_client_id
+ZOHO_CLIENT_SECRET=your_client_secret
+ZOHO_REDIRECT_URI=http://localhost:5173/zoho/callback
+
+# Zoho Configuration
+ZOHO_API_DOMAIN=https://www.zohoapis.in
+VITE_ZOHO_ORGANIZATION_ID=your_organization_id
+
+# Server
+NODE_ENV=development
+PORT=3001
 ```
 
-### Products
-Edit `src/lib/mockData.js`:
-```js
-export const mockProducts = [...]
-```
+### Zoho Setup
 
-### API Integration
-1. Create `src/services/api.js`
-2. Update store actions
-3. Replace mock data
+1. **Create Zoho Developer Account**
+   - Go to [Zoho API Console](https://api-console.zoho.in/)
+   - Create a new client (Server-based Applications)
 
-## 📊 Statistics
+2. **Configure OAuth**
+   - Authorized Redirect URI: `http://localhost:5173/zoho/callback`
+   - Scopes: `ZohoBooks.fullaccess.all`
 
-- **50+ Files** created
-- **~5,000 Lines** of code
-- **30+ Components** built
-- **7 Pages** implemented
-- **13+ Shortcuts** configured
-- **100% Responsive** design
+3. **Get Organization ID**
+   - Login to Zoho Books
+   - Settings → Organization → Copy Organization ID
 
-## 🔐 Security
+**See [docs/ZOHO_SETUP.md](docs/ZOHO_SETUP.md) for detailed setup**
 
-**Current**: Demo with mock authentication  
-**Production**: Implement JWT, API integration, RBAC
+## 📊 Project Stats
+
+- **React Components**: 30+
+- **Pages**: 7
+- **Keyboard Shortcuts**: 13+
+- **Zoho API Methods**: 25+
+- **US States Supported**: 50
+- **Tax Calculation**: Real-time
+- **Lines of Code**: ~6,000+
+
+## 🔐 Security Features
+
+- ✅ **OAuth 2.0** - Secure Zoho authentication
+- ✅ **Token Validation** - Multi-layer validation (5 layers)
+- ✅ **Auto Token Refresh** - Prevents expiration issues
+- ✅ **CORS Protection** - Backend proxy for API calls
+- ✅ **Environment Variables** - Secrets not in code
+- ✅ **HTTPS Required** - Secure production deployment
 
 ## 🐛 Troubleshooting
 
-**Port in use?**
+### Common Issues
+
+**"Invalid access token" error**
 ```bash
-npm run dev -- --port 3000
+# Clear localStorage and re-authenticate
+# Open browser DevTools → Application → Local Storage → Clear All
 ```
 
-**Dependencies error?**
+**Port already in use**
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+# Change port in .env
+PORT=3002
 ```
+
+**Zoho customers not loading**
+```bash
+# Verify organization ID
+echo $VITE_ZOHO_ORGANIZATION_ID
+```
+
+**Build fails**
+```bash
+# Clear cache and rebuild
+rm -rf node_modules dist
+npm install
+npm run build
+```
+
+**CORS errors**
+```bash
+# Ensure backend server is running
+npm run server
+```
+
+**See [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for more solutions**
 
 ## 🤝 Contributing
 
-To extend this project:
-1. Add pages in `src/pages/`
-2. Create components in `src/components/`
-3. Update routes in `App.jsx`
-4. Follow existing patterns
+### Development Workflow
+
+```bash
+# Create feature branch
+git checkout -b feature/new-feature
+
+# Make changes
+# ...
+
+# Commit with conventional commits
+git commit -m "feat: Add new feature"
+
+# Push and create PR
+git push origin feature/new-feature
+```
+
+### Code Style
+
+- Follow existing patterns
+- Use ESLint configuration
+- Write meaningful commit messages
+- Add comments for complex logic
+- Test before committing
+
+### Commit Message Format
+
+```
+feat: Add new feature
+fix: Fix bug in component
+docs: Update documentation
+style: Format code
+refactor: Refactor component
+test: Add tests
+chore: Update dependencies
+```
 
 ## 📝 License
 
 Proprietary - Venezia Kitchen Cabinets & Bath
+
+## 🔮 Future Enhancements
+
+- [ ] Invoice generation and tracking
+- [ ] Payment processing integration
+- [ ] Email templates and automation
+- [ ] PDF export with custom branding
+- [ ] Multi-currency support
+- [ ] Recurring quotes
+- [ ] Quote templates
+- [ ] Analytics dashboard
+- [ ] Mobile app (React Native)
+- [ ] Offline mode with sync
+
+## 📞 Support
+
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/Abhinandangithub01/QuotingSoftware/issues)
+- **Zoho API**: [Zoho Books API Docs](https://www.zoho.com/books/api/v3/)
 
 ---
 
@@ -243,8 +381,10 @@ Proprietary - Venezia Kitchen Cabinets & Bath
 
 ### 🌟 Ready to Start?
 
-**[📖 Read START_HERE.md](START_HERE.md)** to begin your journey!
+**[📖 Read Developer Guide](docs/DEVELOPER_GUIDE.md)** to begin!
 
 Built with ❤️ for Venezia Kitchen Cabinets & Bath
+
+**[⭐ Star this repo](https://github.com/Abhinandangithub01/QuotingSoftware)** if you find it useful!
 
 </div>
