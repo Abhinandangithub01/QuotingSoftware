@@ -24,12 +24,22 @@ class ZohoBooksAPI {
   async request(method, endpoint, data = null, params = {}) {
     try {
       // Check if authenticated first (silent fail)
-      if (!localStorage.getItem('zoho_access_token')) {
+      const storedToken = localStorage.getItem('zoho_access_token')
+      if (!storedToken) {
+        console.log('❌ No token in localStorage')
         return null
       }
       
       // Get valid access token
       const token = await zohoAuth.getValidAccessToken()
+      
+      if (!token) {
+        console.error('❌ getValidAccessToken returned undefined!')
+        console.log('localStorage token:', storedToken ? 'EXISTS' : 'MISSING')
+        return null
+      }
+      
+      console.log('✅ Using token:', token.substring(0, 20) + '...')
 
       // Build URL with query params
       const url = new URL(`${this.proxyURL}${endpoint}`)
