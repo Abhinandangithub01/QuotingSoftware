@@ -50,7 +50,11 @@ export class ZohoAuthService {
   async getAccessToken(code) {
     try {
       // Use proxy server to avoid CORS issues
-      const response = await fetch('http://localhost:3001/api/zoho/token', {
+      const proxyUrl = import.meta.env.PROD 
+        ? '/api/zoho/token'
+        : 'http://localhost:3001/api/zoho/token'
+      
+      const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -93,7 +97,11 @@ export class ZohoAuthService {
       }
 
       // Use proxy server to avoid CORS issues
-      const response = await fetch('http://localhost:3001/api/zoho/refresh', {
+      const proxyUrl = import.meta.env.PROD 
+        ? '/api/zoho/refresh'
+        : 'http://localhost:3001/api/zoho/refresh'
+      
+      const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
