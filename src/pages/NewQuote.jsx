@@ -137,33 +137,33 @@ export function NewQuote() {
   }
 
   return (
-    <div className="space-y-6 pb-32">
+    <div className="pb-20">
       {/* Fixed Top Summary Bar */}
-      <div className="sticky top-0 z-10 bg-background border-b shadow-sm">
-        <div className="flex items-center justify-between p-4">
+      <div className="sticky top-0 z-50 bg-background border-b shadow-md">
+        <div className="flex items-center justify-between px-6 py-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">New Quote</h1>
-            <p className="text-sm text-muted-foreground">Create a new quote for your customer</p>
+            <h1 className="text-xl font-bold tracking-tight">New Quote</h1>
+            <p className="text-xs text-muted-foreground">Create a new quote for your customer</p>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Subtotal</p>
-              <p className="text-lg font-semibold">{formatCurrency(subtotal)}</p>
+              <p className="text-xs text-muted-foreground">Subtotal</p>
+              <p className="text-base font-semibold">{formatCurrency(subtotal)}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Tax ({taxResult.totalTaxRate.toFixed(2)}%)</p>
-              <p className="text-lg font-semibold">{formatCurrency(tax)}</p>
+              <p className="text-xs text-muted-foreground">Tax ({taxResult.totalTaxRate.toFixed(2)}%)</p>
+              <p className="text-base font-semibold">{formatCurrency(tax)}</p>
             </div>
-            <div className="text-right border-l pl-6">
-              <p className="text-sm text-muted-foreground">Grand Total</p>
-              <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
+            <div className="text-right border-l pl-4">
+              <p className="text-xs text-muted-foreground">Grand Total</p>
+              <p className="text-xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => handleSave(false)} size="lg">
+              <Button onClick={() => handleSave(false)}>
                 <Save className="mr-2 h-4 w-4" />
                 Save Quote
               </Button>
-              <Button onClick={() => handleSave(true)} variant="outline" size="lg">
+              <Button onClick={() => handleSave(true)} variant="outline">
                 Save as Draft
               </Button>
             </div>
@@ -172,12 +172,12 @@ export function NewQuote() {
       </div>
 
       {/* Full Width Content */}
-      <div className="space-y-6">
+      <div className="p-6 space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Customer & Project Details</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Customer & Project Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label>Customer *</Label>
                 <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
@@ -222,43 +222,45 @@ export function NewQuote() {
                 </Popover>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="project">Project Name *</Label>
+              <div className="grid gap-3 grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="project" className="text-sm">Project Name *</Label>
                   <Input
                     id="project"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
                     placeholder="Kitchen Renovation"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dispatch">Dispatch Date</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dispatch" className="text-sm">Dispatch Date</Label>
                   <Input
                     id="dispatch"
                     type="date"
                     value={dispatchDate}
                     onChange={(e) => setDispatchDate(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="location" className="text-sm">Location</Label>
+                  <Input
+                    id="location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="123 Main St, Boston, MA"
+                    className="h-9"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="123 Main St, Boston, MA"
-                />
-              </div>
-
               {zohoQuoteNumber && (
-                <div className="rounded-lg bg-muted p-3">
+                <div className="rounded-md bg-muted p-2">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Zoho Quote #:</span>
-                    <span className="font-mono text-sm">{zohoQuoteNumber}</span>
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium">Zoho Quote #:</span>
+                    <span className="font-mono text-xs">{zohoQuoteNumber}</span>
                   </div>
                 </div>
               )}
@@ -266,15 +268,15 @@ export function NewQuote() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle>Line Items</CardTitle>
-                <div className="text-sm text-muted-foreground">
-                  Press <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Ctrl+K</kbd> to search products
+                <CardTitle className="text-lg">Line Items</CardTitle>
+                <div className="text-xs text-muted-foreground">
+                  Press <kbd className="px-1 py-0.5 text-xs border rounded bg-muted">Ctrl+K</kbd> to search products
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
+            <CardContent className="p-4">
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -293,15 +295,15 @@ export function NewQuote() {
 
           {/* Shipping Section */}
           <Card>
-            <CardHeader>
-              <CardTitle>Shipping & Additional Details</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Shipping</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="shipping">Shipping Method</Label>
+            <CardContent>
+              <div className="grid gap-3 grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="shipping" className="text-sm">Shipping Method</Label>
                   <Select value={shippingMethod} onValueChange={setShippingMethod}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -311,14 +313,15 @@ export function NewQuote() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="shippingCost">Shipping Cost</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="shippingCost" className="text-sm">Shipping Cost</Label>
                   <Input
                     id="shippingCost"
                     type="number"
                     value={shippingCost}
                     onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
+                    className="h-9"
                   />
                 </div>
               </div>
