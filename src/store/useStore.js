@@ -11,9 +11,12 @@ export const useStore = create((set, get) => ({
     set({ theme: newTheme })
   },
   
-  // User
-  user: null,
-  setUser: (user) => set({ user }),
+  // User (persist in localStorage)
+  user: JSON.parse(localStorage.getItem('user')) || null,
+  setUser: (user) => {
+    localStorage.setItem('user', JSON.stringify(user))
+    set({ user })
+  },
   
   // Loading states
   loading: {

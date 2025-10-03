@@ -98,6 +98,7 @@ export function Settings() {
   }
 
   const handleDisconnectZoho = () => {
+    zohoAuth.clearTokens()
     setIsZohoConnected(false)
     toast.success('Disconnected from Zoho Books')
   }
