@@ -11,17 +11,27 @@ const ORGANIZATION_ID = import.meta.env.VITE_ZOHO_ORGANIZATION_ID
 
 class ZohoBooksAPI {
   constructor() {
-    // Use Railway backend in production, localhost in development
+    // Use relative URL in production (works with any domain), localhost in development
     this.proxyURL = import.meta.env.PROD
-      ? 'https://quotingsoftware-production.up.railway.app/api/zoho/books'
+      ? '/api/zoho/books'
       : 'http://localhost:3001/api/zoho/books'
     this.organizationId = ORGANIZATION_ID
+  }
+  
+  /**
+   * Get the API domain from localStorage (set during OAuth)
+   */
+  getApiDomain() {
+    return localStorage.getItem('zoho_api_domain') || 'https://www.zohoapis.in'
   }
 
   /**
    * Make API request through proxy server (avoids CORS)
+   * Includes retry logic with token refresh on 401 errors
    */
-  async request(method, endpoint, data = null, params = {}) {
+  async request(method, endpoint, data = null, params = {}, retryCount = 0) {
+    const MAX_RETRIES = 1
+    
     try {
       // Check if authenticated first (silent fail)
       const storedToken = localStorage.getItem('zoho_access_token')
@@ -30,7 +40,7 @@ class ZohoBooksAPI {
         return null
       }
       
-      // Get valid access token
+      // Get valid access token (will auto-refresh if expired)
       const token = await zohoAuth.getValidAccessToken()
       
       if (!token) {
@@ -39,7 +49,7 @@ class ZohoBooksAPI {
         return null
       }
       
-      console.log('✅ Using token:', token.substring(0, 20) + '...')
+      console.log('✅ Using token for', endpoint, ':', token.substring(0, 20) + '...')
 
       // Build URL with query params
       const url = new URL(`${this.proxyURL}${endpoint}`)
@@ -66,14 +76,24 @@ class ZohoBooksAPI {
 
       const response = await fetch(url.toString(), options)
 
-      // Handle token expiration
-      if (response.status === 401) {
+      // Handle token expiration with retry
+      if (response.status === 401 && retryCount < MAX_RETRIES) {
+        console.log('🔄 Got 401, refreshing token and retrying...')
         await zohoAuth.refreshAccessToken()
-        return this.request(method, endpoint, data, params)
+        // Retry with incremented count
+        return this.request(method, endpoint, data, params, retryCount + 1)
       }
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'API request failed')
+        let errorMessage = 'API request failed'
+        try {
+          const error = await response.json()
+          errorMessage = error.message || errorMessage
+        } catch (e) {
+          // Response might not be JSON
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorMessage)
       }
 
       // Parse and return the actual response data
@@ -85,7 +105,7 @@ class ZohoBooksAPI {
       if (localStorage.getItem('zoho_access_token')) {
         console.error(`Zoho API Error [${method} ${endpoint}]:`, error)
       }
-      return null
+      throw error // Re-throw to let caller handle
     }
   }
 

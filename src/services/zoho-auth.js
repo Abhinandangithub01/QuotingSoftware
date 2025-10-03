@@ -6,10 +6,26 @@ import { getConfig } from '@/lib/config'
 
 export class ZohoAuthService {
   constructor() {
+    this.accessToken = null
+    this.refreshToken = null
+    this.tokenExpiry = null
+    this.config = null
+    this.refreshPromise = null // Prevent multiple simultaneous refresh calls
+  }
+
+  /**
+   * Reload tokens from localStorage
+   */
+  reloadTokens() {
     this.accessToken = localStorage.getItem('zoho_access_token')
     this.refreshToken = localStorage.getItem('zoho_refresh_token')
     this.tokenExpiry = localStorage.getItem('zoho_token_expiry')
-    this.config = null
+    
+    console.log('🔄 Tokens reloaded from localStorage:', {
+      hasAccess: !!this.accessToken,
+      hasRefresh: !!this.refreshToken,
+      expiry: this.tokenExpiry
+    })
   }
 
   async loadConfig() {
@@ -38,9 +54,11 @@ export class ZohoAuthService {
       response_type: 'code',
       redirect_uri: config.VITE_ZOHO_REDIRECT_URI,
       access_type: 'offline',
-      prompt: 'consent'
+      prompt: 'consent',
+      state: 'zoho_oauth' // Anti-CSRF token
     })
 
+    console.log('🔐 Authorization URL:', `${ZOHO_AUTH_URL}/auth`)
     return `${ZOHO_AUTH_URL}/auth?${params.toString()}`
   }
 
@@ -73,6 +91,7 @@ export class ZohoAuthService {
         has_access_token: !!data.access_token,
         has_refresh_token: !!data.refresh_token,
         expires_in: data.expires_in,
+        api_domain: data.api_domain,
         access_token_preview: data.access_token ? data.access_token.substring(0, 20) + '...' : 'MISSING'
       })
       
@@ -86,16 +105,20 @@ export class ZohoAuthService {
       console.log('💾 Saving to localStorage...', {
         access_token: data.access_token ? 'Present' : 'UNDEFINED',
         refresh_token: data.refresh_token ? 'Present' : 'UNDEFINED',
+        api_domain: data.api_domain,
         expiry: expiryTime
       })
 
+      // Save tokens and API domain (CRITICAL: Use api_domain from Zoho response)
       localStorage.setItem('zoho_access_token', data.access_token)
       localStorage.setItem('zoho_refresh_token', data.refresh_token)
       localStorage.setItem('zoho_token_expiry', expiryTime.toString())
+      localStorage.setItem('zoho_api_domain', data.api_domain || 'https://www.zohoapis.in')
       
       console.log('✅ Tokens saved. Verification:', {
         saved_access: localStorage.getItem('zoho_access_token') ? 'SUCCESS' : 'FAILED',
-        saved_refresh: localStorage.getItem('zoho_refresh_token') ? 'SUCCESS' : 'FAILED'
+        saved_refresh: localStorage.getItem('zoho_refresh_token') ? 'SUCCESS' : 'FAILED',
+        saved_api_domain: localStorage.getItem('zoho_api_domain')
       })
 
       return data
@@ -107,9 +130,29 @@ export class ZohoAuthService {
 
   /**
    * Refresh the access token (via proxy server)
+   * Prevents multiple simultaneous refresh calls
    */
   async refreshAccessToken() {
+    // If already refreshing, wait for that to complete
+    if (this.refreshPromise) {
+      console.log('⏳ Token refresh already in progress, waiting...')
+      return this.refreshPromise
+    }
+
+    this.refreshPromise = this._doRefreshToken()
+    
     try {
+      const result = await this.refreshPromise
+      return result
+    } finally {
+      this.refreshPromise = null
+    }
+  }
+
+  async _doRefreshToken() {
+    try {
+      console.log('🔄 Starting token refresh...')
+      
       if (!this.refreshToken) {
         throw new Error('No refresh token available')
       }
@@ -129,10 +172,13 @@ export class ZohoAuthService {
 
       if (!response.ok) {
         const error = await response.json()
+        console.error('❌ Token refresh failed:', error)
         throw new Error(error.error || 'Failed to refresh access token')
       }
 
       const data = await response.json()
+      
+      console.log('✅ Token refreshed successfully')
       
       // Update access token
       this.accessToken = data.access_token
@@ -144,7 +190,7 @@ export class ZohoAuthService {
 
       return data
     } catch (error) {
-      console.error('Error refreshing access token:', error)
+      console.error('❌ Error refreshing access token:', error)
       // Clear tokens on refresh failure
       this.clearTokens()
       throw error
@@ -164,19 +210,36 @@ export class ZohoAuthService {
    */
   async getValidAccessToken() {
     // Always reload from localStorage in case it was updated
-    this.accessToken = localStorage.getItem('zoho_access_token')
-    this.refreshToken = localStorage.getItem('zoho_refresh_token')
-    this.tokenExpiry = localStorage.getItem('zoho_token_expiry')
+    this.reloadTokens()
     
     if (!this.accessToken) {
+      console.error('❌ No access token in localStorage')
       throw new Error('No access token available. Please authenticate.')
     }
 
-    if (this.isTokenExpired()) {
+    // Validate token format
+    if (!this.accessToken.startsWith('1000.')) {
+      console.error('❌ Invalid token format:', this.accessToken.substring(0, 20))
+      throw new Error('Invalid access token format')
+    }
+
+    // Check if token is expired or will expire in next 5 minutes
+    if (this.isTokenExpired() || this.isTokenExpiringSoon()) {
+      console.log('🔄 Token expired or expiring soon, refreshing...')
       await this.refreshAccessToken()
     }
 
+    console.log('✅ Valid token available:', this.accessToken.substring(0, 30) + '...')
     return this.accessToken
+  }
+
+  /**
+   * Check if token will expire in next 5 minutes
+   */
+  isTokenExpiringSoon() {
+    if (!this.tokenExpiry) return false
+    const fiveMinutes = 5 * 60 * 1000
+    return Date.now() >= (parseInt(this.tokenExpiry) - fiveMinutes)
   }
 
   /**
