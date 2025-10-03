@@ -7,8 +7,13 @@ import express from 'express'
 import cors from 'cors'
 import fetch from 'node-fetch'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 dotenv.config()
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -23,6 +28,11 @@ app.use(cors({
 }))
 
 app.use(express.json())
+
+// Serve static files from dist folder in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'dist')))
+}
 
 // Determine auth URL based on API domain
 const API_DOMAIN = process.env.ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
@@ -179,6 +189,13 @@ app.all('/api/zoho/books/*', async (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Zoho OAuth Proxy Server Running' })
 })
+
+// Serve frontend for all other routes (SPA fallback) in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'))
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Zoho OAuth Proxy Server running on http://localhost:${PORT}`)
