@@ -34,22 +34,34 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')))
 }
 
+// API endpoint to provide config to frontend
+app.get('/api/config', (req, res) => {
+  res.json({
+    VITE_ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID,
+    VITE_ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI,
+    VITE_ZOHO_ORGANIZATION_ID: process.env.VITE_ZOHO_ORGANIZATION_ID,
+    VITE_ZOHO_API_DOMAIN: process.env.ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
+  })
+})
+
 // Determine auth URL based on API domain
 const API_DOMAIN = process.env.ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
 const ZOHO_AUTH_URL = API_DOMAIN.includes('zoho.in') 
   ? 'https://accounts.zoho.in/oauth/v2'
   : 'https://accounts.zoho.com/oauth/v2'
-
 const CLIENT_ID = process.env.ZOHO_CLIENT_ID
 const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET
 const REDIRECT_URI = process.env.ZOHO_REDIRECT_URI
 
 console.log('🔐 Server Configuration:')
+console.log('  Auth URL:', ZOHO_AUTH_URL)
 console.log('  API Domain:', API_DOMAIN)
-console.log('  Client ID:', CLIENT_ID ? 'SET' : 'MISSING')
-console.log('  Client Secret:', CLIENT_SECRET ? 'SET' : 'MISSING')
+console.log('  Client ID:', CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : 'MISSING')
+console.log('  Client Secret:', CLIENT_SECRET ? 'SET (hidden)' : 'MISSING')
 console.log('  Redirect URI:', REDIRECT_URI)
+console.log('  Organization ID:', process.env.VITE_ZOHO_ORGANIZATION_ID || 'MISSING')
 console.log('  Environment:', process.env.NODE_ENV || 'development')
+console.log('  Port:', PORT)
 
 // Exchange authorization code for access token
 app.post('/api/zoho/token', async (req, res) => {
@@ -244,17 +256,6 @@ app.all('/api/zoho/books/*', async (req, res) => {
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Zoho OAuth Proxy Server Running' })
-})
-
-// Config endpoint for frontend to get environment variables
-app.get('/api/config', (req, res) => {
-  res.json({
-    VITE_ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.VITE_ZOHO_CLIENT_ID,
-    VITE_ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.VITE_ZOHO_CLIENT_SECRET,
-    VITE_ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.VITE_ZOHO_REDIRECT_URI,
-    VITE_ZOHO_ORGANIZATION_ID: process.env.VITE_ZOHO_ORGANIZATION_ID,
-    VITE_ZOHO_API_DOMAIN: process.env.ZOHO_API_DOMAIN || process.env.VITE_ZOHO_API_DOMAIN
-  })
 })
 
 // Serve frontend for all other routes (SPA fallback) in production
