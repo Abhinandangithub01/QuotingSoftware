@@ -179,7 +179,17 @@ app.post('/api/zoho/token', async (req, res) => {
       api_domain: data.api_domain,
       access_token_preview: data.access_token.substring(0, 20) + '...',
       token_length: data.access_token.length,
-      expires_at: new Date(Date.now() + (data.expires_in * 1000)).toISOString()\n    })\n    \n    // Return token data with additional metadata\n    res.json({\n      access_token: data.access_token,\n      refresh_token: data.refresh_token,\n      expires_in: data.expires_in,\n      token_type: data.token_type || 'Bearer',\n      api_domain: data.api_domain || API_DOMAIN\n    })
+      expires_at: new Date(Date.now() + (data.expires_in * 1000)).toISOString()
+    })
+    
+    // Return token data with additional metadata
+    res.json({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: data.expires_in,
+      token_type: data.token_type || 'Bearer',
+      api_domain: data.api_domain || API_DOMAIN
+    })
   } catch (error) {
     console.error('❌ Error exchanging token:', error)
     res.status(500).json({ error: error.message })
@@ -231,7 +241,16 @@ app.post('/api/zoho/refresh', async (req, res) => {
       expires_in: data.expires_in,
       token_type: data.token_type,
       access_token_preview: data.access_token.substring(0, 20) + '...',
-      expires_at: new Date(Date.now() + (data.expires_in * 1000)).toISOString()\n    })\n    \n    // Return refreshed token with metadata\n    res.json({\n      access_token: data.access_token,\n      expires_in: data.expires_in,\n      token_type: data.token_type || 'Bearer',\n      api_domain: data.api_domain || API_DOMAIN\n    })
+      expires_at: new Date(Date.now() + (data.expires_in * 1000)).toISOString()
+    })
+    
+    // Return refreshed token with metadata
+    res.json({
+      access_token: data.access_token,
+      expires_in: data.expires_in,
+      token_type: data.token_type || 'Bearer',
+      api_domain: data.api_domain || API_DOMAIN
+    })
   } catch (error) {
     console.error('❌ Error refreshing token:', error)
     res.status(500).json({ error: error.message })

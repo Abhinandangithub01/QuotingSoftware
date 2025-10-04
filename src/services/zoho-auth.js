@@ -344,12 +344,6 @@ export class ZohoAuthService {
       }
     }
 
-    // Check if token is expired or will expire in next 5 minutes
-    if (this.isTokenExpired() || this.isTokenExpiringSoon()) {
-      console.log('🔄 Token expired or expiring soon, refreshing...')
-      await this.refreshAccessToken()
-    }
-
     console.log('✅ Valid token available:', this.accessToken.substring(0, 30) + '...')
     return this.accessToken
   }
