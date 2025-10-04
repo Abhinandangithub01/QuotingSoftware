@@ -67,8 +67,25 @@ export function ZohoCallback() {
         }
       } catch (error) {
         console.error('OAuth callback error:', error)
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        })
         setStatus('error')
-        setMessage(error.message || 'Failed to connect to Zoho Books')
+        
+        // Show more helpful error message
+        let errorMessage = error.message || 'Failed to connect to Zoho Books'
+        
+        if (errorMessage.includes('redirect_uri')) {
+          errorMessage += '. The redirect URI in Railway environment variables must match exactly with Zoho API Console.'
+        } else if (errorMessage.includes('invalid_code')) {
+          errorMessage += '. The authorization code has expired or been used. Please try again.'
+        } else if (errorMessage.includes('invalid_client')) {
+          errorMessage += '. Check your Client ID and Secret in Railway environment variables.'
+        }
+        
+        setMessage(errorMessage)
       }
     }
 

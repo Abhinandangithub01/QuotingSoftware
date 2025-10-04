@@ -110,15 +110,38 @@ app.post('/api/zoho/token', async (req, res) => {
     console.log('🔍 refresh_token type:', typeof data.refresh_token)
     console.log('🔍 refresh_token value:', data.refresh_token)
 
-    // TEMPORARY: Relaxed validation - only check if tokens exist
+    // Check if Zoho returned an error
+    if (data.error) {
+      console.error('❌ Zoho returned error:', {
+        error: data.error,
+        error_description: data.error_description,
+        full_response: data
+      })
+      return res.status(400).json({ 
+        error: data.error,
+        message: data.error_description || data.error,
+        details: data 
+      })
+    }
+
+    // Validate tokens exist
     if (!data.access_token) {
-      console.error('❌ CRITICAL: No access_token from Zoho!', JSON.stringify(data, null, 2))
-      return res.status(500).json({ error: 'No access token in Zoho response', details: data })
+      console.error('❌ CRITICAL: No access_token from Zoho!')
+      console.error('Full response:', JSON.stringify(data, null, 2))
+      return res.status(500).json({ 
+        error: 'No access token in Zoho response', 
+        details: data,
+        hint: 'Check if redirect_uri matches exactly in Zoho API Console'
+      })
     }
     
     if (!data.refresh_token) {
-      console.error('❌ CRITICAL: No refresh_token from Zoho!', JSON.stringify(data, null, 2))
-      return res.status(500).json({ error: 'No refresh token in Zoho response', details: data })
+      console.error('❌ CRITICAL: No refresh_token from Zoho!')
+      console.error('Full response:', JSON.stringify(data, null, 2))
+      return res.status(500).json({ 
+        error: 'No refresh token in Zoho response', 
+        details: data 
+      })
     }
     
     // Warn if tokens look suspicious but still allow them through
