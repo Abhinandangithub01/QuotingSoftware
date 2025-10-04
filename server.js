@@ -44,8 +44,12 @@ const CLIENT_ID = process.env.ZOHO_CLIENT_ID
 const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET
 const REDIRECT_URI = process.env.ZOHO_REDIRECT_URI
 
-console.log('🔐 Using Zoho Auth URL:', ZOHO_AUTH_URL)
-console.log('📚 Using API Domain:', API_DOMAIN)
+console.log('🔐 Server Configuration:')
+console.log('  API Domain:', API_DOMAIN)
+console.log('  Client ID:', CLIENT_ID ? 'SET' : 'MISSING')
+console.log('  Client Secret:', CLIENT_SECRET ? 'SET' : 'MISSING')
+console.log('  Redirect URI:', REDIRECT_URI)
+console.log('  Environment:', process.env.NODE_ENV || 'development')
 
 // Exchange authorization code for access token
 app.post('/api/zoho/token', async (req, res) => {
@@ -65,6 +69,12 @@ app.post('/api/zoho/token', async (req, res) => {
     })
 
     console.log('🔄 Exchanging code for token...')
+    console.log('📝 Request params:', {
+      grant_type: 'authorization_code',
+      client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      code: code ? code.substring(0, 20) + '...' : 'MISSING'
+    })
 
     const response = await fetch(`${ZOHO_AUTH_URL}/token`, {
       method: 'POST',

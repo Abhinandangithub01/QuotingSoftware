@@ -30,13 +30,25 @@ export async function getConfig() {
 }
 
 function getDevConfig() {
+  // Dynamically determine redirect URI based on current origin
+  const redirectUri = import.meta.env.VITE_ZOHO_REDIRECT_URI || 
+    `${window.location.origin}/zoho/callback`
+  
   const config = {
     VITE_ZOHO_CLIENT_ID: import.meta.env.VITE_ZOHO_CLIENT_ID,
     VITE_ZOHO_CLIENT_SECRET: import.meta.env.VITE_ZOHO_CLIENT_SECRET,
-    VITE_ZOHO_REDIRECT_URI: import.meta.env.VITE_ZOHO_REDIRECT_URI,
-    VITE_ZOHO_ORGANIZATION_ID: import.meta.env.VITE_ZOHO_ORGANIZATION_ID,
-    VITE_ZOHO_API_DOMAIN: import.meta.env.VITE_ZOHO_API_DOMAIN
+    VITE_ZOHO_REDIRECT_URI: redirectUri,
+    VITE_ZOHO_API_DOMAIN: import.meta.env.VITE_ZOHO_API_DOMAIN || 'https://www.zohoapis.in',
+    VITE_ZOHO_ORGANIZATION_ID: import.meta.env.VITE_ZOHO_ORGANIZATION_ID
   }
+  
+  console.log('📋 Config loaded:', {
+    clientId: config.VITE_ZOHO_CLIENT_ID ? 'SET' : 'MISSING',
+    redirectUri: config.VITE_ZOHO_REDIRECT_URI,
+    apiDomain: config.VITE_ZOHO_API_DOMAIN,
+    orgId: config.VITE_ZOHO_ORGANIZATION_ID ? 'SET' : 'MISSING'
+  })
+  
   cachedConfig = config
   return config
 }
