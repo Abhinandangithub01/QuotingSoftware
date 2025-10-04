@@ -56,12 +56,19 @@ const REDIRECT_URI = process.env.ZOHO_REDIRECT_URI
 console.log('🔐 Server Configuration:')
 console.log('  Auth URL:', ZOHO_AUTH_URL)
 console.log('  API Domain:', API_DOMAIN)
-console.log('  Client ID:', CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : 'MISSING')
-console.log('  Client Secret:', CLIENT_SECRET ? 'SET (hidden)' : 'MISSING')
-console.log('  Redirect URI:', REDIRECT_URI)
-console.log('  Organization ID:', process.env.VITE_ZOHO_ORGANIZATION_ID || 'MISSING')
+console.log('  Client ID:', CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : '❌ MISSING')
+console.log('  Client Secret:', CLIENT_SECRET ? '✅ SET (hidden)' : '❌ MISSING')
+console.log('  Redirect URI:', REDIRECT_URI || '❌ MISSING')
+console.log('  Organization ID:', process.env.VITE_ZOHO_ORGANIZATION_ID || '❌ MISSING')
 console.log('  Environment:', process.env.NODE_ENV || 'development')
 console.log('  Port:', PORT)
+
+// Validate critical environment variables
+if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
+  console.error('❌ CRITICAL: Missing required environment variables!')
+  console.error('   Required: ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REDIRECT_URI')
+  console.error('   Please set these in Railway dashboard')
+}
 
 // Exchange authorization code for access token
 app.post('/api/zoho/token', async (req, res) => {
@@ -70,6 +77,15 @@ app.post('/api/zoho/token', async (req, res) => {
 
     if (!code) {
       return res.status(400).json({ error: 'Authorization code is required' })
+    }
+
+    // Validate server has credentials
+    if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
+      console.error('❌ Server missing credentials!')
+      return res.status(500).json({ 
+        error: 'Server configuration error',
+        message: 'Zoho credentials not configured on server. Please set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, and ZOHO_REDIRECT_URI in Railway environment variables.'
+      })
     }
 
     const params = new URLSearchParams({
@@ -83,9 +99,11 @@ app.post('/api/zoho/token', async (req, res) => {
     console.log('🔄 Exchanging code for token...')
     console.log('📝 Request params:', {
       grant_type: 'authorization_code',
-      client_id: CLIENT_ID,
+      client_id: CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : 'MISSING',
+      client_secret: CLIENT_SECRET ? 'SET' : 'MISSING',
       redirect_uri: REDIRECT_URI,
-      code: code ? code.substring(0, 20) + '...' : 'MISSING'
+      code: code ? code.substring(0, 20) + '...' : 'MISSING',
+      auth_url: `${ZOHO_AUTH_URL}/token`
     })
 
     const response = await fetch(`${ZOHO_AUTH_URL}/token`, {
@@ -157,11 +175,11 @@ app.post('/api/zoho/token', async (req, res) => {
       has_access_token: !!data.access_token,
       has_refresh_token: !!data.refresh_token,
       expires_in: data.expires_in,
+      token_type: data.token_type,
+      api_domain: data.api_domain,
       access_token_preview: data.access_token.substring(0, 20) + '...',
-      token_length: data.access_token.length
-    })
-    
-    res.json(data)
+      token_length: data.access_token.length,
+      expires_at: new Date(Date.now() + (data.expires_in * 1000)).toISOString()\n    })\n    \n    // Return token data with additional metadata\n    res.json({\n      access_token: data.access_token,\n      refresh_token: data.refresh_token,\n      expires_in: data.expires_in,\n      token_type: data.token_type || 'Bearer',\n      api_domain: data.api_domain || API_DOMAIN\n    })
   } catch (error) {
     console.error('❌ Error exchanging token:', error)
     res.status(500).json({ error: error.message })
@@ -211,10 +229,9 @@ app.post('/api/zoho/refresh', async (req, res) => {
     console.log('📦 Refreshed token:', {
       has_access_token: !!data.access_token,
       expires_in: data.expires_in,
-      access_token_preview: data.access_token.substring(0, 20) + '...'
-    })
-    
-    res.json(data)
+      token_type: data.token_type,
+      access_token_preview: data.access_token.substring(0, 20) + '...',
+      expires_at: new Date(Date.now() + (data.expires_in * 1000)).toISOString()\n    })\n    \n    // Return refreshed token with metadata\n    res.json({\n      access_token: data.access_token,\n      expires_in: data.expires_in,\n      token_type: data.token_type || 'Bearer',\n      api_domain: data.api_domain || API_DOMAIN\n    })
   } catch (error) {
     console.error('❌ Error refreshing token:', error)
     res.status(500).json({ error: error.message })

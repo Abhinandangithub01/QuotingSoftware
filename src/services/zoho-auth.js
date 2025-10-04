@@ -11,6 +11,7 @@ export class ZohoAuthService {
     this.tokenExpiry = null
     this.config = null
     this.refreshPromise = null // Prevent multiple simultaneous refresh calls
+    this.tokenRefreshBuffer = 5 * 60 * 1000 // Refresh 5 minutes before expiry (as per Zoho best practices)
   }
 
   /**
@@ -86,10 +87,14 @@ export class ZohoAuthService {
    */
   async getAccessToken(code) {
     try {
+      console.log('🔑 Getting access token with code:', code ? code.substring(0, 20) + '...' : 'MISSING')
+      
       // Use proxy server to avoid CORS issues
       const proxyUrl = import.meta.env.PROD 
         ? '/api/zoho/token'
         : 'http://localhost:3001/api/zoho/token'
+      
+      console.log('📡 Calling proxy:', proxyUrl)
       
       const response = await fetch(proxyUrl, {
         method: 'POST',
@@ -99,9 +104,22 @@ export class ZohoAuthService {
         body: JSON.stringify({ code })
       })
 
+      console.log('📥 Response status:', response.status, response.statusText)
+
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to get access token')
+        console.error('❌ Token exchange failed:', error)
+        
+        // Provide more helpful error messages
+        if (error.error === 'invalid_client') {
+          throw new Error('Invalid client credentials. Please verify Client ID and Secret in Railway environment variables match your Zoho API Console.')
+        } else if (error.error === 'redirect_uri_mismatch') {
+          throw new Error('Redirect URI mismatch. Please ensure the redirect URI in Railway matches exactly with Zoho API Console.')
+        } else if (error.error === 'invalid_code') {
+          throw new Error('Authorization code is invalid or expired. Please try connecting again.')
+        }
+        
+        throw new Error(error.message || error.error || 'Failed to get access token')
       }
 
       const data = await response.json()
@@ -127,25 +145,33 @@ export class ZohoAuthService {
       this.accessToken = data.access_token
       this.refreshToken = data.refresh_token
       
-      const expiryTime = Date.now() + (data.expires_in * 1000)
+      // Calculate expiry time (Zoho tokens expire in 1 hour = 3600 seconds)
+      // As per Zoho docs: expires_in is in seconds
+      const expiresInMs = (data.expires_in || 3600) * 1000
+      const expiryTime = Date.now() + expiresInMs
       this.tokenExpiry = expiryTime
 
       // Determine API domain from config (Zoho doesn't return api_domain in token response)
       const config = await this.loadConfig()
-      const apiDomain = config.VITE_ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
+      const apiDomain = data.api_domain || config.VITE_ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
       
-      console.log('💾 Saving to localStorage...', {
+      console.log('💾 Saving tokens to localStorage...', {
         access_token: data.access_token ? 'Present' : 'UNDEFINED',
         refresh_token: data.refresh_token ? 'Present' : 'UNDEFINED',
         api_domain: apiDomain,
-        expiry: expiryTime
+        expires_in_seconds: data.expires_in,
+        expiry_time: new Date(expiryTime).toISOString(),
+        will_refresh_at: new Date(expiryTime - this.tokenRefreshBuffer).toISOString()
       })
 
-      // Save tokens and API domain
+      // Save tokens and metadata to localStorage
+      // As per Zoho best practices: store all token metadata
       localStorage.setItem('zoho_access_token', data.access_token)
       localStorage.setItem('zoho_refresh_token', data.refresh_token)
       localStorage.setItem('zoho_token_expiry', expiryTime.toString())
       localStorage.setItem('zoho_api_domain', apiDomain)
+      localStorage.setItem('zoho_token_type', data.token_type || 'Bearer')
+      localStorage.setItem('zoho_token_created_at', Date.now().toString())
       
       console.log('✅ Tokens saved. Verification:', {
         saved_access: localStorage.getItem('zoho_access_token') ? 'SUCCESS' : 'FAILED',
@@ -225,15 +251,20 @@ export class ZohoAuthService {
       
       // Update access token
       this.accessToken = data.access_token
-      const expiryTime = Date.now() + (data.expires_in * 1000)
+      const expiresInMs = (data.expires_in || 3600) * 1000
+      const expiryTime = Date.now() + expiresInMs
       this.tokenExpiry = expiryTime
 
+      // Update localStorage with new token and metadata
       localStorage.setItem('zoho_access_token', data.access_token)
       localStorage.setItem('zoho_token_expiry', expiryTime.toString())
+      localStorage.setItem('zoho_token_created_at', Date.now().toString())
       
-      console.log('✅ Token refresh saved:', {
+      console.log('✅ Token refreshed successfully:', {
         access_token_preview: data.access_token.substring(0, 20) + '...',
-        expiry: new Date(expiryTime).toISOString()
+        expires_in_seconds: data.expires_in,
+        expiry_time: new Date(expiryTime).toISOString(),
+        will_refresh_at: new Date(expiryTime - this.tokenRefreshBuffer).toISOString()
       })
 
       return data
@@ -246,7 +277,8 @@ export class ZohoAuthService {
   }
 
   /**
-   * Check if token is expired
+   * Check if token is expired or will expire soon
+   * As per Zoho best practices: refresh before actual expiry
    */
   isTokenExpired() {
     if (!this.tokenExpiry) return true
@@ -254,7 +286,18 @@ export class ZohoAuthService {
   }
 
   /**
+   * Check if token needs refresh (expires within 5 minutes)
+   * As per Zoho docs: proactively refresh tokens before expiry
+   */
+  needsRefresh() {
+    if (!this.tokenExpiry) return true
+    const timeUntilExpiry = parseInt(this.tokenExpiry) - Date.now()
+    return timeUntilExpiry <= this.tokenRefreshBuffer
+  }
+
+  /**
    * Get valid access token (refresh if needed)
+   * Implements Zoho's recommended token refresh strategy
    */
   async getValidAccessToken() {
     // Always reload from localStorage in case it was updated
@@ -280,6 +323,25 @@ export class ZohoAuthService {
       console.error('❌ Invalid Zoho token format:', this.accessToken.substring(0, 20))
       this.clearTokens()
       throw new Error('Invalid Zoho access token format. Please re-authenticate.')
+    }
+
+    // Check if token needs refresh (Zoho best practice: refresh proactively)
+    if (this.needsRefresh()) {
+      console.log('🔄 Token expires soon, refreshing proactively...')
+      try {
+        await this.refreshAccessToken()
+        // Reload after refresh
+        this.reloadTokens()
+      } catch (refreshError) {
+        console.error('❌ Failed to refresh token:', refreshError)
+        // If refresh fails and token is actually expired, throw error
+        if (this.isTokenExpired()) {
+          this.clearTokens()
+          throw new Error('Token expired and refresh failed. Please re-authenticate.')
+        }
+        // If not expired yet, continue with current token
+        console.warn('⚠️ Refresh failed but token still valid, continuing...')
+      }
     }
 
     // Check if token is expired or will expire in next 5 minutes
