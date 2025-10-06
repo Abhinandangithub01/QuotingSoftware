@@ -3,14 +3,13 @@
 ## Table of Contents
 1. [Architecture Overview](#architecture-overview)
 2. [Tech Stack](#tech-stack)
-3. [Features](#features)
-4. [API Documentation](#api-documentation)
-5. [Zoho Integration](#zoho-integration)
-6. [State Management](#state-management)
-7. [UI Components](#ui-components)
-8. [Keyboard Shortcuts](#keyboard-shortcuts)
-9. [Tax System](#tax-system)
-10. [Development Workflow](#development-workflow)
+3. [Zoho Books Integration](#zoho-books-integration)
+4. [Features](#features)
+5. [State Management](#state-management)
+6. [UI Components](#ui-components)
+7. [Keyboard Shortcuts](#keyboard-shortcuts)
+8. [Tax System](#tax-system)
+9. [Development Workflow](#development-workflow)
 
 ---
 
@@ -32,8 +31,21 @@ src/
 │   ├── Settings.jsx
 │   └── ZohoCallback.jsx
 ├── services/           # API and external services
-│   ├── zoho-auth.js    # Zoho OAuth 2.0 handler
-│   └── zoho-books.js   # Zoho Books API client
+│   ├── index.js        # Centralized service exports
+│   ├── zoho-auth.js    # OAuth 2.0 & token management
+│   ├── zoho-contacts.js     # Customer/vendor API
+│   ├── zoho-items.js        # Product/service catalog
+│   ├── zoho-invoices.js     # Invoice operations
+│   ├── zoho-estimates.js    # Quote/estimate API
+│   ├── zoho-salesorders.js  # Sales order management
+│   ├── zoho-payments.js     # Payment processing
+│   ├── zoho-creditnotes.js  # Credit note handling
+│   ├── zoho-projects.js     # Project management
+│   ├── zoho-expenses.js     # Expense tracking
+│   ├── zoho-bills.js        # Bill management
+│   ├── zoho-purchaseorders.js # Purchase orders
+│   ├── zoho-fields.js       # Field metadata service
+│   └── zoho-books.js        # Legacy compatibility
 ├── store/              # Zustand state management
 │   └── useStore.js
 ├── lib/                # Utilities
@@ -157,88 +169,62 @@ calculateUSTax(subtotal, state, zipCode, options)
 
 ---
 
-## API Documentation
+## Zoho Books Integration
 
-### Backend Endpoints
+### Complete API Coverage
 
-#### 1. OAuth Token Exchange
-```http
-POST /api/zoho/token
-Content-Type: application/json
+**14 Service Modules - 200+ Methods**
 
-{
-  "code": "authorization_code"
-}
+See `FEATURES_IMPLEMENTATION.md` for complete list.
 
-Response:
-{
-  "access_token": "1000.xxx",
-  "refresh_token": "1000.yyy",
-  "expires_in": 3600
-}
-```
-
-#### 2. Token Refresh
-```http
-POST /api/zoho/refresh
-Content-Type: application/json
-
-{
-  "refresh_token": "1000.yyy"
-}
-
-Response:
-{
-  "access_token": "1000.zzz",
-  "expires_in": 3600
-}
-```
-
-#### 3. Zoho Books Proxy
-```http
-GET /api/zoho/books/estimates?organization_id=xxx
-Authorization: Zoho-oauthtoken {access_token}
-
-Response: Proxied from Zoho Books API
-```
-
-### Frontend API Client
-
-**Location**: `src/services/zoho-books.js`
+### Quick Start
 
 ```javascript
-import { zohoBooksAPI } from '@/services/zoho-books'
-
-// Get all estimates
-const estimates = await zohoBooksAPI.getEstimates({ status: 'draft' })
-
-// Create estimate
-const newEstimate = await zohoBooksAPI.createEstimate({
-  customer_id: '123',
-  line_items: [...]
-})
+// Import services
+import { 
+  zohoContacts,
+  zohoInvoices,
+  zohoEstimates,
+  zohoItems,
+  zohoFields
+} from '@/services'
 
 // Get customers
-const customers = await zohoBooksAPI.getCustomers()
+const customers = await zohoContacts.listContacts()
 
-// Get items
-const items = await zohoBooksAPI.getItems()
+// Create invoice
+const invoice = await zohoInvoices.createInvoice({
+  customer_id: '123',
+  line_items: [{ item_id: '456', quantity: 2, rate: 100 }]
+})
+
+// Get dynamic fields
+const invoiceFields = await zohoFields.getInvoiceFields()
+
+// Create estimate
+const estimate = await zohoEstimates.createEstimate(data)
 ```
 
-**Available Methods**:
-- `getEstimates(params)` / `getEstimate(id)`
-- `createEstimate(data)` / `updateEstimate(id, data)`
-- `deleteEstimate(id)`
-- `acceptEstimate(id)` / `declineEstimate(id)`
-- `convertEstimateToInvoice(id)`
-- `getCustomers()` / `getCustomer(id)`
-- `createCustomer(data)` / `updateCustomer(id, data)`
-- `getItems()` / `getItem(id)`
-- `createItem(data)` / `updateItem(id, data)`
+### Available Services
+
+| Service | Module | Methods |
+|---------|--------|---------|
+| **Contacts** | `zohoContacts` | 17 |
+| **Items** | `zohoItems` | 7 |
+| **Invoices** | `zohoInvoices` | 31 |
+| **Estimates** | `zohoEstimates` | 18 |
+| **Sales Orders** | `zohoSalesOrders` | 17 |
+| **Payments** | `zohoPayments` | 9 |
+| **Credit Notes** | `zohoCreditNotes` | 12 |
+| **Projects** | `zohoProjects` | 14 |
+| **Expenses** | `zohoExpenses` | 11 |
+| **Bills** | `zohoBills` | 14 |
+| **Purchase Orders** | `zohoPurchaseOrders` | 16 |
+| **Fields** | `zohoFields` | 10 |
 
 ---
 
-## Zoho Integration
+## OAuth 2.0 Authentication
 
 ### OAuth 2.0 Flow
 
@@ -246,7 +232,7 @@ const items = await zohoBooksAPI.getItems()
 ```javascript
 // User clicks "Connect to Zoho"
 const authUrl = await zohoAuth.getAuthorizationUrl()
-window.open(authUrl, 'zoho-auth', 'width=600,height=700')
+window.open(authUrl, '_blank', 'width=600,height=700')
 ```
 
 **2. Callback Handling**
@@ -254,7 +240,7 @@ window.open(authUrl, 'zoho-auth', 'width=600,height=700')
 // /zoho/callback page
 const code = searchParams.get('code')
 const tokenData = await zohoAuth.getAccessToken(code)
-// Tokens saved to localStorage
+// Tokens automatically saved to localStorage
 ```
 
 **3. API Requests**
