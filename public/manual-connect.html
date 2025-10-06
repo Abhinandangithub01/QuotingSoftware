@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Zoho Connection</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        button:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            animation: slideIn 0.3s;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .steps {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .steps ol {
+            padding-left: 20px;
+        }
+        .steps li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Manual Zoho Connection</h1>
+        <p class="subtitle">Quick OAuth token exchange</p>
+        
+        <div class="steps">
+            <strong>📋 How to use:</strong>
+            <ol>
+                <li>Click "Connect to Zoho Books" in your app</li>
+                <li>After authorizing, you'll be redirected to a URL starting with <code>http://localhost:5173/zoho/callback?...</code></li>
+                <li>Copy that ENTIRE URL and paste it below</li>
+                <li>Click "Exchange & Store Tokens"</li>
+            </ol>
+        </div>
+        
+        <div class="input-group">
+            <label for="callbackUrl">Paste Callback URL:</label>
+            <textarea 
+                id="callbackUrl" 
+                placeholder="http://localhost:5173/zoho/callback?state=zoho_oauth&code=1000.xxx...&location=in&accounts-server=https%3A%2F%2Faccounts.zoho.in"
+            ></textarea>
+        </div>
+        
+        <button id="exchangeBtn" onclick="exchangeTokens()">
+            🔄 Exchange & Store Tokens
+        </button>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        async function exchangeTokens() {
+            const btn = document.getElementById('exchangeBtn');
+            const msgDiv = document.getElementById('message');
+            const callbackUrl = document.getElementById('callbackUrl').value.trim();
+            
+            if (!callbackUrl) {
+                msgDiv.innerHTML = '<div class="message error"><strong>❌ Error:</strong> Please paste the callback URL first.</div>';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Exchanging tokens...';
+            msgDiv.innerHTML = '<div class="message loading">🔄 Exchanging authorization code for tokens...</div>';
+            
+            try {
+                // Extract code from URL
+                const url = new URL(callbackUrl);
+                const code = url.searchParams.get('code');
+                
+                if (!code) {
+                    throw new Error('No authorization code found in URL');
+                }
+                
+                console.log('📤 Sending code to backend:', code.substring(0, 30) + '...');
+                
+                // Call backend to exchange token
+                const response = await fetch('http://localhost:3001/api/zoho/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || data.error) {
+                    throw new Error(data.message || data.error || 'Token exchange failed');
+                }
+                
+                // Store tokens
+                const expiryTime = Date.now() + (data.expires_in * 1000);
+                localStorage.setItem('zoho_access_token', data.access_token);
+                localStorage.setItem('zoho_refresh_token', data.refresh_token);
+                localStorage.setItem('zoho_token_expiry', expiryTime.toString());
+                localStorage.setItem('zoho_api_domain', data.api_domain || 'https://www.zohoapis.in');
+                localStorage.setItem('zoho_token_type', data.token_type || 'Bearer');
+                localStorage.setItem('zoho_token_created_at', Date.now().toString());
+                
+                console.log('✅ Tokens stored successfully!');
+                
+                msgDiv.innerHTML = `
+                    <div class="message success">
+                        <strong>✅ Success!</strong><br><br>
+                        Tokens have been exchanged and stored!<br><br>
+                        <strong>Access Token:</strong> ${data.access_token.substring(0, 40)}...<br>
+                        <strong>Refresh Token:</strong> ${data.refresh_token?.substring(0, 40)}...<br><br>
+                        <strong>Next step:</strong> Go to <a href="http://localhost:5173/settings" target="_blank" style="color: #155724; font-weight: 600;">http://localhost:5173/settings</a> and refresh the page!
+                    </div>
+                `;
+                
+                btn.textContent = '✅ Tokens Stored! Opening App...';
+                
+                // Auto-open the app
+                setTimeout(() => {
+                    window.open('http://localhost:5173/settings', '_blank');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                msgDiv.innerHTML = `
+                    <div class="message error">
+                        <strong>❌ Error:</strong><br>
+                        ${error.message}<br><br>
+                        ${error.message.includes('Failed to fetch') ? 
+                            'Make sure the backend server is running on port 3001.' : 
+                            'Try getting a fresh authorization code.'}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🔄 Try Again';
+            }
+        }
+        
+        // Auto-extract code from current URL if available
+        window.addEventListener('DOMContentLoaded', () => {
+            const currentUrl = window.location.href;
+            if (currentUrl.includes('code=')) {
+                document.getElementById('callbackUrl').value = currentUrl;
+            }
+        });
+    </script>
+</body>
+</html>

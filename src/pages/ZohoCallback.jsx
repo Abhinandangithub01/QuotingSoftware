@@ -35,6 +35,12 @@ export function ZohoCallback() {
         // Exchange code for access token
         setMessage('Exchanging authorization code...')
         console.log('ZohoCallback: Calling getAccessToken...')
+        
+        // Clear any old tokens first
+        localStorage.removeItem('zoho_access_token')
+        localStorage.removeItem('zoho_refresh_token')
+        localStorage.removeItem('zoho_token_expiry')
+        
         const tokenData = await zohoAuth.getAccessToken(code)
         console.log('ZohoCallback: Token received:', tokenData ? 'Success' : 'Failed')
         

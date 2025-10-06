@@ -97,14 +97,14 @@ app.post('/api/zoho/token', async (req, res) => {
     })
 
     console.log('🔄 Exchanging code for token...')
-    console.log('📝 Request params:', {
-      grant_type: 'authorization_code',
-      client_id: CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : 'MISSING',
-      client_secret: CLIENT_SECRET ? 'SET' : 'MISSING',
-      redirect_uri: REDIRECT_URI,
-      code: code ? code.substring(0, 20) + '...' : 'MISSING',
-      auth_url: `${ZOHO_AUTH_URL}/token`
-    })
+    console.log('📝 EXACT Request params being sent:')
+    console.log('   URL:', `${ZOHO_AUTH_URL}/token`)
+    console.log('   grant_type:', 'authorization_code')
+    console.log('   client_id:', CLIENT_ID)
+    console.log('   client_secret:', CLIENT_SECRET)
+    console.log('   redirect_uri:', REDIRECT_URI)
+    console.log('   code:', code)
+    console.log('   Body string:', params.toString())
 
     const response = await fetch(`${ZOHO_AUTH_URL}/token`, {
       method: 'POST',
@@ -118,6 +118,7 @@ app.post('/api/zoho/token', async (req, res) => {
 
     if (!response.ok) {
       console.error('❌ Token exchange failed:', data)
+      console.error('❌ Full error response:', JSON.stringify(data, null, 2))
       return res.status(response.status).json(data)
     }
 
