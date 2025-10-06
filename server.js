@@ -45,8 +45,15 @@ app.get('/api/config', (req, res) => {
 })
 
 // Determine auth URL based on API domain
-const API_DOMAIN = process.env.ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
-const ZOHO_AUTH_URL = API_DOMAIN.includes('zoho.in') 
+const API_DOMAIN = (process.env.ZOHO_API_DOMAIN || 'https://www.zohoapis.in').trim()
+
+// Debug: Log what we're checking
+console.log('🔍 DEBUG: API_DOMAIN =', `"${API_DOMAIN}"`)
+console.log('🔍 DEBUG: API_DOMAIN length =', API_DOMAIN.length)
+console.log('🔍 DEBUG: includes zoho.in?', API_DOMAIN.includes('zoho.in'))
+console.log('🔍 DEBUG: includes .in?', API_DOMAIN.includes('.in'))
+
+const ZOHO_AUTH_URL = API_DOMAIN.includes('.in') 
   ? 'https://accounts.zoho.in/oauth/v2'
   : 'https://accounts.zoho.com/oauth/v2'
 const CLIENT_ID = process.env.ZOHO_CLIENT_ID
@@ -73,18 +80,28 @@ if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
 // Exchange authorization code for access token
 app.post('/api/zoho/token', async (req, res) => {
   try {
-    const { code } = req.body
+    const { code, redirect_uri } = req.body
 
     if (!code) {
       return res.status(400).json({ error: 'Authorization code is required' })
     }
 
     // Validate server has credentials
-    if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
+    if (!CLIENT_ID || !CLIENT_SECRET) {
       console.error('❌ Server missing credentials!')
       return res.status(500).json({ 
         error: 'Server configuration error',
-        message: 'Zoho credentials not configured on server. Please set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, and ZOHO_REDIRECT_URI in Railway environment variables.'
+        message: 'Zoho credentials not configured on server. Please set ZOHO_CLIENT_ID and ZOHO_CLIENT_SECRET in Railway environment variables.'
+      })
+    }
+
+    // Use redirect_uri from request if provided, otherwise fall back to env variable
+    const redirectUri = redirect_uri || REDIRECT_URI
+    
+    if (!redirectUri) {
+      return res.status(400).json({ 
+        error: 'Redirect URI required',
+        message: 'Please provide redirect_uri in request body or set ZOHO_REDIRECT_URI environment variable.'
       })
     }
 
@@ -92,7 +109,7 @@ app.post('/api/zoho/token', async (req, res) => {
       grant_type: 'authorization_code',
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: redirectUri,
       code: code
     })
 
@@ -102,7 +119,7 @@ app.post('/api/zoho/token', async (req, res) => {
     console.log('   grant_type:', 'authorization_code')
     console.log('   client_id:', CLIENT_ID)
     console.log('   client_secret:', CLIENT_SECRET)
-    console.log('   redirect_uri:', REDIRECT_URI)
+    console.log('   redirect_uri:', redirectUri)
     console.log('   code:', code)
     console.log('   Body string:', params.toString())
 
@@ -317,6 +334,46 @@ app.all('/api/zoho/books/*', async (req, res) => {
     console.error('Stack:', error.stack)
     res.status(500).json({ error: error.message, stack: error.stack })
   }
+})
+
+// OAuth callback handler for test page
+app.get('/callback', (req, res) => {
+  const code = req.query.code
+  const error = req.query.error
+  
+  if (error) {
+    console.error('❌ OAuth error:', error)
+    return res.send(`
+      <html>
+        <body>
+          <h1>OAuth Error</h1>
+          <p>Error: ${error}</p>
+          <p>${req.query.error_description || ''}</p>
+          <a href="/zoho-test.html">Back to Test Page</a>
+        </body>
+      </html>
+    `)
+  }
+  
+  if (!code) {
+    return res.send(`
+      <html>
+        <body>
+          <h1>No Authorization Code</h1>
+          <p>No code parameter found in callback</p>
+          <a href="/zoho-test.html">Back to Test Page</a>
+        </body>
+      </html>
+    `)
+  }
+  
+  // Redirect back to test page with code
+  res.redirect(`/zoho-test.html?code=${code}`)
+})
+
+// Serve test page
+app.get('/zoho-test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'zoho-test.html'))
 })
 
 // Health check

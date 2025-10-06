@@ -82,6 +82,8 @@ export class ZohoAuthService {
    */
   async getAccessToken(code) {
     try {
+      const config = await this.loadConfig()
+      
       // Use proxy server to avoid CORS issues
       const proxyUrl = import.meta.env.PROD 
         ? '/api/zoho/token'
@@ -92,7 +94,10 @@ export class ZohoAuthService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ 
+          code,
+          redirect_uri: config.VITE_ZOHO_REDIRECT_URI 
+        })
       })
 
       if (!response.ok) {
@@ -133,7 +138,7 @@ export class ZohoAuthService {
       this.tokenExpiry = expiryTime
 
       // Determine API domain from config (Zoho doesn't return api_domain in token response)
-      const config = await this.loadConfig()
+      // config is already loaded at the beginning of this function
       const apiDomain = data.api_domain || config.VITE_ZOHO_API_DOMAIN || 'https://www.zohoapis.in'
 
       // Save tokens and metadata to localStorage
