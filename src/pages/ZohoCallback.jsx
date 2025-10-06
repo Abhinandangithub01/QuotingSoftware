@@ -128,7 +128,7 @@ export function ZohoCallback() {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => window.location.href = '/login'}
                   className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                 >
                   Back to Login

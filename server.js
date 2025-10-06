@@ -269,10 +269,16 @@ app.all('/api/zoho/books/*', async (req, res) => {
 
     // Extract the path after /api/zoho/books/
     const apiPath = req.url.replace('/api/zoho/books', '')
-    const apiUrl = `${API_DOMAIN}/api/v3${apiPath}`
+    const apiUrl = `${API_DOMAIN}/books/v3${apiPath}`
 
     console.log(`📡 Proxying: ${req.method} ${apiUrl}`)
     console.log(`🔑 Auth: ${authorization.substring(0, 30)}...`)
+    
+    // Ensure organization_id is in query params (required by Zoho)
+    const url = new URL(apiUrl)
+    if (!url.searchParams.has('organization_id')) {
+      console.warn('⚠️ Warning: organization_id not in request, some APIs may fail')
+    }
 
     const options = {
       method: req.method,
